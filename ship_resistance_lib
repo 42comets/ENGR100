@@ -1,0 +1,21 @@
+#----data
+
+"Please input data one column at a time, in the format [3.14,42,9001] (enclose with brackets and separate by commas)."
+
+speed_fps=[]
+drag_lb=[]
+
+s=rawinput("Speed (fps)=?")
+speed_fps=map(int,s.split())
+
+f=rawinput("Force (lbf)=?")
+force_lb=map(int,f.split())
+
+
+#----imports
+
+import.math
+
+#----function definitions
+
+def 

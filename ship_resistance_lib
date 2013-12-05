@@ -1,21 +1,29 @@
-#----data
-
-"Please input data one column at a time, in the format [3.14,42,9001] (enclose with brackets and separate by commas)."
-
-speed_fps=[]
-drag_lb=[]
-
-s=rawinput("Speed (fps)=?")
-speed_fps=map(int,s.split())
-
-f=rawinput("Force (lbf)=?")
-force_lb=map(int,f.split())
+#----DATA INPUTS
+#I need to figure out how to make it so that lists include both bools and floats
 
 
-#----imports
+import math
 
-import.math
+print "Please input data one column at a time, in the format '3.14,42,9001' (separate elements by commas)."
 
-#----function definitions
+#---speed
+print "Input speed values (fps or ft/s)"
+speed_fps=raw_input(list)
+#check if input is a list
+if type(speed_fps) is list:
+    print speed_fps
+else:
+    print "Please input a list formatted as described."
+    speed_fps=raw_input(list)
+print speed_fps
 
-def 
+#---force
+print "Input force values (lb or lbf)"
+force_lb=raw_input(list)
+#check if input is a list
+if type(force_lb) is list:
+    print force_lb
+else:
+    print "Please input a list formatted as described."
+    force_lb=raw_input(list)
+print force_lb

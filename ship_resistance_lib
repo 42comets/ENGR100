@@ -1,29 +1,202 @@
-#----DATA INPUTS
-#I need to figure out how to make it so that lists include both bools and floats
+#----This Python 2.7 script was made in response to NPC's task memo.
+#----The purpose of this script is to output full-scale ship resistance based on model data.
+#----It is assumed that the numbers input will be in the units indicated in the code.
+#----Currently, the script allows for variable input of data (each time the user runs the code, he/she can input a different set of data for the speed and force (drag) values).
+#----Future improvements would allow for variable input of ship constants as well. (With ship constants being draft, beam, etc.)
 
+
+#----****DATA INPUTS****----
+
+#----DEFINITIONS: here, I define functions allowing for user input of variables. I also define given ship coefficients such as draft and beam.
+
+def complete_list_input_prompt(variable):
+    user_input(variable)
+    check(variable)
+
+def user_input(variable):
+    #input data for a given variable that we measured on a table (speed, force, whatever) and print out what we got from the user
+    print "Please input data one column at a time, in the format '3.14,42,9001' (separate elements by commas with no units). MAKE SURE YOUR FORMATTING IS CORRECT!"
+    print "Input the values for %s" %variable
+    variable_input=raw_input()
+    collected_data[variable]=[float(n) for n in variable_input.split(",")]
+    print "Here's what I got from you:"
+    print collected_data[variable]
+
+def check(variable):
+    #checks to ensure the user input exactly what he/she wanted there, and re-loops the program if he/she says the output was wrong
+    #THIS IS FOR LIST VARIABLES
+    print "Is this correct? Y/N"
+    correct=raw_input()
+    if correct == "y" or correct == "Y" or correct == "Yes" or correct == "yes":
+        print "Great! On to the next step!"
+    elif correct == "n" or correct == "N" or correct == "No" or correct == "no":
+        print "Oh noes. Better try again! Check your formatting."
+        complete_list_input_prompt(variable)
+    else:
+        print "Sorry, but I have no idea what you said. Please answer Y or N to the question."
+        complete_list_input_prompt(variable)
+
+ship_constants={"length_in_m" : 175 , "beam_in_m" : 25.4 , "draft_in_m" : 9.5 , "depth_in_m" : 15.4 , "block_coefficient" : 0.5716 , "wetted_surface_area_in_m_squared" : 5361.4 , "lambda_value" : 50 , "weight_in_tonnes" : 24742}
+
+
+#----ACTIVE CODE
+
+print "Hello, world! My name is Cody Codon and I will be your guide to the wonderful world of Pokemon!"
+print "But first--! Are you a BOY, or a GIRL?"
+print "Wait--wrong script; whoops. I'll actually be calculating ship resistance for you today, which is almost, but not quite, entirely unlike Pokemon."
+print ""
+print ""
+
+collected_data={}
+complete_list_input_prompt("speed_in_fps") #asks for speed inputs
+complete_list_input_prompt("force_in_lbf") #asks for force inputs
+
+print ""
+print ""
+print "For your reference, these are the constant values we have recorded:"
+print ""
+print ship_constants
+print ""
+print "And this is the data we got from you:"
+print ""
+print collected_data
+print ""
+print "If any of this looks strange, you'll either have to restart the program or change the constants by hand. Otherwise, the hard work's over for you now! Achievement get!"
+print ""
+print "I'm going to calculate some unit conversions for each of your data points now."
+print ""
+
+#----****DATA CONVERSIONS and SCALING****----
+
+#----DATA used ENGLISH UNITS!
+#----SCIENCE used DISAPPROVING GLARE. ENGLISH UNITS are NOT VERY EFFECTIVE...
+#----So we're going to have to convert units here so they all match up. I've chosen to go with SI units, so things like feet and pounds will be converted into their correspoinding SI units (like meters and newtons respectively)
+#----Also, as a note to self: "lbf" is NOT pounds*feet. Apparently we have to specify that pounds are a unit of force by adding an "f" at the end. (Are there even any English units for mass? Hm....) But anyway, the point is: lbf-->N, not J
+
+#----ACTIVE CODE: here, I convert units to metric units and scale the ship dimensions to find model dimensions. I did not see a need to use definitions for it since it is more efficient and convenient to simply write the code out.
+
+ship_constants["weight_in_kg"]=1000*ship_constants["weight_in_tonnes"]
+#metric tonnes to kilograms
+
+collected_data["force_in_n"]=[a/0.22481 for a in collected_data["force_in_lbf"]]
+#pounds-force to newtons
+
+collected_data["speed_in_mps"]=[a*0.3048 for a in collected_data["speed_in_fps"]]
+#feet/second to meters/second
+
+print "Here are your new variables:"
+print "Weight in kilograms = %s" %ship_constants["weight_in_kg"]
+print "Force in Newtons = %s" %collected_data["force_in_n"]
+print "Speed in meters per second = %s" %collected_data["speed_in_mps"]
+print ""
+print ""
+
+model_constants={}
+
+model_constants["length_in_m"]=ship_constants["length_in_m"]/ship_constants["lambda_value"]
+#finds model length
+
+model_constants["beam_in_m"]=ship_constants["beam_in_m"]/ship_constants["lambda_value"]
+#finds model beam
+
+model_constants["draft_in_m"]=ship_constants["draft_in_m"]/ship_constants["lambda_value"]
+#finds model draft
+
+model_constants["depth_in_m"]=ship_constants["depth_in_m"]/ship_constants["lambda_value"]
+#finds model depth
+
+model_constants["wetted_surface_area_in_m_squared"]=ship_constants["wetted_surface_area_in_m_squared"]/(ship_constants["lambda_value"]**2)
+#finds model wetted surface area
+
+
+#----Okay! I've got all these variables and shiny SI units! What next?
+#----A WILD SHIP APPEARED! WHAT WILL CODY DO!?!
+#---->FIGHT
+#----CODY USED: CALCULATE SHIP RESISTANCE!
+#----...in case that made no sense, this is where the calculations are going to happen
+
+#----****CALCULATIONS****----
+
+#----DEFINITIONS (again): here, I define functions to calculate ship resistance, and define coefficients. The total coefficient is found partwise.
+
+calculated_data={}
+
+g=9.8
+v_fresh=1.006*10**(-6)
+v_salt=1.354*10**(-6)
+p_fresh=1000
+p_salt=1027
+v=[]
+p=[]
 
 import math
+#imports pre-defined mathematical functions and constants
 
-print "Please input data one column at a time, in the format '3.14,42,9001' (separate elements by commas)."
+def watertype():
+    #determines the type of water to figure out if the ship is going to be in salt or fresh water (the model is assumed to be in freshwater)
+    #sets constant values for a ship in salt/fresh water, respectively
+    print "Is the ship (not the model) going to be in SALT or FRESH water?"
+    water=raw_input()
+    print ""
+    if water=="FRESH" or water=="fresh" or water=="FRESHWATER" or water=="freshwater":
+        v.append(v_fresh)
+        p.append(p_fresh)
+        print "I'm going to calculate values for a ship in freshwater."
+    elif water=="SALT" or water=="salt" or water=="SALTWATER" or water=="saltwater":
+        v.append(v_salt)
+        p.append(p_salt)
+        print "I'm going to calculate values for a ship in saltwater."
+    else:
+        print "I'm sorry, but I have no idea what you said. I've lost my babel fish, unfortunately, so you'll have to answer me with either 'SALT' or 'FRESH'."
+        watertype()
 
-#---speed
-print "Input speed values (fps or ft/s)"
-speed_fps=raw_input(list)
-#check if input is a list
-if type(speed_fps) is list:
-    print speed_fps
-else:
-    print "Please input a list formatted as described."
-    speed_fps=raw_input(list)
-print speed_fps
 
-#---force
-print "Input force values (lb or lbf)"
-force_lb=raw_input(list)
-#check if input is a list
-if type(force_lb) is list:
-    print force_lb
-else:
-    print "Please input a list formatted as described."
-    force_lb=raw_input(list)
-print force_lb
+#----ACTIVE CODE
+
+watertype()
+v=v[0]
+p=p[0]
+
+calculated_data["ship_velocity_in_mps"]=[float(math.sqrt(ship_constants["lambda_value"])*a) for a in collected_data["speed_in_mps"]]
+#finds ship velocity based on model velocity
+print calculated_data["ship_velocity_in_mps"]
+
+calculated_data["reynold_number_model"]=[float(model_constants["length_in_m"]*a/(v_fresh)) for a in collected_data["speed_in_mps"]]
+#calculates reynold number of model
+print calculated_data["reynold_number_model"]
+
+calculated_data["total_resistance_coefficient_model"]=[float(a/(.05*1000*model_constants["wetted_surface_area_in_m_squared"]*b)) for a,b in zip(collected_data["force_in_n"],collected_data["speed_in_mps"])]
+#calculates total resistance coefficient of model
+print calculated_data["total_resistance_coefficient_model"]
+
+calculated_data["friction_coefficient_model"]=[float(0.075/(math.log(a)-2)**2) for a in calculated_data["reynold_number_model"]]
+#calculates the friction coefficient of the model
+print calculated_data["friction_coefficient_model"]
+
+calculated_data["residual_resistance_coefficient"]=[float(a-b) for a,b in zip(calculated_data["total_resistance_coefficient_model"],calculated_data["friction_coefficient_model"])]
+#calculates residual resistance coefficient
+#this value is the same for both the ship and the model
+print calculated_data["residual_resistance_coefficient"]
+
+calculated_data["reynold_number_ship"]=[float(ship_constants["length_in_m"]*a/(v)) for a in calculated_data["ship_velocity_in_mps"]]
+#calculates reynold number of ship
+print calculated_data["reynold_number_ship"]
+
+calculated_data["friction_coefficient_ship"]=[float(0.075/(math.log(a)-2)**2) for a in calculated_data["reynold_number_ship"]]
+#calculates the friction coefficient of the ship
+print calculated_data["friction_coefficient_ship"]
+
+#----Put it all together!
+
+#finds the total ship resistance assuming we are scaling to saltwater
+calculated_data["total_ship_resistance"]=[(0.5)*p*(ship_constants["wetted_surface_area_in_m_squared"])*(b**2)*(c+d+0.0004) for b,c,d in zip(calculated_data["ship_velocity_in_mps"],calculated_data["friction_coefficient_ship"],calculated_data["residual_resistance_coefficient"])]
+
+print""
+table=[zip(calculated_data["ship_velocity_in_mps"],collected_data["force_in_n"],calculated_data["total_ship_resistance"])]
+print table
+print ""
+
+print "The total ship resistance for this ship with varying velocity and drag force is:"
+print calculated_data["total_ship_resistance"]
+
+
